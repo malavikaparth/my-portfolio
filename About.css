@@ -1,0 +1,9 @@
+.about{
+  color: var(--lightest_slate);
+  font-family: 'NTR';
+  padding-left: 200px;
+  padding-top: 100px;
+}
+.about .about_me{
+    font-size: 20px;  
+}
