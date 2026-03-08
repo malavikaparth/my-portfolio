@@ -1,0 +1,2 @@
+CSS has variables!!!
+https://www.w3schools.com/css/css3_variables.asp
