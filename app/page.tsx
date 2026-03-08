@@ -1,65 +1,182 @@
-import Image from "next/image";
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
+import portrait from '@/public/portrait.png'
+
+const SLANT_NAME = `   __  ___        __           _ __        
+  /  |/  /___ _  / /___ _   __(_) /______ _
+ / /|_/ / __ \`/ / / __ \`/ | / / / //_/ __ \`/
+/ /  / / /_/ / / / /_/ /| |/ / / ,<  / /_/ /
+/_/  /_/__,_/_/_/__,_/ |___/_/_/|_| __,_/
+
+    ____             __  __                                      __  __    _ 
+   / __ \\____ ______/ /_/ /_  ____ __________ __________ ______/ /_/ /_  (_)
+  / /_/ / __ \`/ ___/ __/ __ \\/ __ \`/ ___/ __ \`/ ___/ __ \`/ __/ __/ __ \\/ / 
+ / ____/ /_/ / /  / /_/ / / / /_/ (__  ) /_/ / /  / /_/ / / / /_/ / / / /  
+/_/    __,_/_/   __/_/ /_/__,_/____/__,_/_/   __,_/_/  __/_/ /_/_/`
+
+const ABOUT_LINES = [
+  { text: 'Malavika Parthasarathi is a Systems Engineer', cls: 'bright' },
+  { text: 'at KBC, Leuven, Belgium', cls: 'bright' },
+  { text: "She received her Master's in Computer Science", cls: '' },
+  { text: 'from Vrije Universiteit Brussel (VUB), Belgium,', cls: '' },
+  { text: "and her Bachelor's from CUST, India.", cls: '' },
+  { text: '', cls: 'spacer' },
+  { text: 'Driven by curiosity. Grounded in craft.', cls: 'muted' },
+]
+
+const PANELS = ['about', 'links'] as const
+type Panel = typeof PANELS[number]
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms))
+}
 
 export default function Home() {
+  const [activePanel, setActivePanel] = useState<Panel>('about')
+  const [visible, setVisible] = useState(false)
+  const typedRef = useRef<HTMLDivElement>(null)
+  const typingDone = useRef(false)
+
+  // Fade in + typing animation
+  useEffect(() => {
+    if (typingDone.current) return
+    typingDone.current = true
+
+    const run = async () => {
+      await sleep(300)
+      setVisible(true)
+      await sleep(600)
+
+      const container = typedRef.current
+      if (!container) return
+
+      for (const item of ABOUT_LINES) {
+        const lineEl = document.createElement('div')
+        lineEl.className = 'line' + (item.cls ? ` ${item.cls}` : '')
+        container.appendChild(lineEl)
+
+        if (item.cls === 'spacer' || item.text === '') {
+          lineEl.innerHTML = '&nbsp;'
+          await sleep(60)
+          continue
+        }
+
+        const textNode = document.createTextNode('')
+        const cur = document.createElement('span')
+        cur.className = 'cursor'
+        lineEl.appendChild(textNode)
+        lineEl.appendChild(cur)
+
+        for (const char of item.text) {
+          textNode.textContent += char
+          await sleep(20 + Math.random() * 15)
+        }
+
+        lineEl.removeChild(cur)
+        await sleep(70)
+      }
+
+      const finalCur = document.createElement('span')
+      finalCur.className = 'cursor'
+      container.appendChild(finalCur)
+    }
+
+    run()
+  }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const idx = PANELS.indexOf(activePanel)
+      if (e.key === 'ArrowRight') setActivePanel(PANELS[(idx + 1) % PANELS.length])
+      if (e.key === 'ArrowLeft') setActivePanel(PANELS[(idx - 1 + PANELS.length) % PANELS.length])
+      if (e.key === 't' || e.key === 'T') document.body.classList.toggle('light')
+      if (e.key === 'q' || e.key === 'Q') {
+        document.body.style.transition = 'opacity .4s'
+        document.body.style.opacity = '0'
+        setTimeout(() => window.close(), 450)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [activePanel])
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <>
+      <nav>
+        <div className="nav-left">
+          {PANELS.map((p) => (
+            <button
+              key={p}
+              className={`nav-btn${activePanel === p ? ' active' : ''}`}
+              onClick={() => setActivePanel(p)}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <div className="nav-right"><span>[</span>under construction<span>]</span></div>
+      </nav>
+
+      <main>
+        <div className={`stage${visible ? ' visible' : ''}`}>
+          <div className="portrait-wrap">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src={portrait}
+              alt="malavika parthasarathi"
+              className="portrait-img"
+              width={180}
+              height={180}
+              priority
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <pre className="name-slant">{SLANT_NAME}</pre>
+          </div>
+
+          <div className="content">
+            <div className={`panel${activePanel === 'about' ? ' active' : ''}`}>
+              <div className="typed-block" ref={typedRef} />
+            </div>
+
+            <div className={`panel${activePanel === 'links' ? ' active' : ''}`}>
+              <div className="panel-title">links</div>
+              <div className="link-list">
+                <div className="link-row">
+                  <span className="link-key">email</span>
+                  <a className="link-val" href="mailto:parth.malavika@gmail.com">parth.malavika@gmail.com</a>
+                </div>
+                <div className="link-row">
+                  <span className="link-key">linkedin</span>
+                  <a className="link-val" href="https://www.linkedin.com/in/malavika-parthasarathi/" target="_blank" rel="noreferrer">
+                    linkedin.com/in/malavika-parthasarathi
+                  </a>
+                </div>
+                <div className="link-row">
+                  <span className="link-key">github</span>
+                  <a className="link-val" href="https://github.com/malavikaparth/profile" target="_blank" rel="noreferrer">
+                    github.com/malavika
+                  </a>
+                </div>
+                <div className="link-row">
+                  <span className="link-key">location</span>
+                  <span className="link-plain">Leuven, Belgium</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
-    </div>
-  );
+
+      <footer>
+        <div>v1.0.0</div>
+        <div className="footer-keys">
+          <div className="fkey"><kbd>←→</kbd><span>navigate</span></div>
+          <div className="fkey"><kbd>t</kbd><span>theme</span></div>
+          <div className="fkey"><kbd>q</kbd><span>quit</span></div>
+        </div>
+        <div />
+      </footer>
+    </>
+  )
 }
